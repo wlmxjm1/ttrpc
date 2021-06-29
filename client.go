@@ -170,6 +170,8 @@ func (c *Client) dispatch(ctx context.Context, req *Request, resp *Response) err
 
 func (c *Client) Close() error {
 	c.closeOnce.Do(func() {
+		// let userCloseFunc in which func the resources are cleanuped finish before rpc call return
+		c.userCloseFunc()
 		c.closed()
 	})
 	return nil
@@ -248,10 +250,7 @@ func (c *Client) run() {
 	}()
 	go recv.run(c.ctx, c.channel)
 
-	defer func() {
-		c.conn.Close()
-		c.userCloseFunc()
-	}()
+	c.conn.Close()
 
 	for {
 		select {
